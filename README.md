@@ -1,6 +1,6 @@
 # Search course documents and brief educators
 
-Infrai gives you one OpenAI-compatible endpoint that covers both retrieval and briefing, so you don't wire up separate vendors for the two steps. This service is working code: post a learner's question and deadline to `/course/search`, pull the closest course document, and get a two-sentence educator briefing back. Both steps sit behind one OpenAI-compatible `baseURL`: `embeddings` finds the teaching material, then `chat.completions` turns that material and the deadline state into a report.
+We run this as a small service with working code from the start: post a learner question and deadline to `/course/search`, pull the closest course document, and get a two-sentence educator briefing back. Infrai keeps both steps behind one OpenAI-compatible `baseURL`: `embeddings` finds the teaching material, then `chat.completions` turns that material and the deadline state into a report.
 
 ## Run the course workflow
 
@@ -16,24 +16,24 @@ In another terminal:
 npm run demo
 ```
 
-The demo sends learner `learner-204`, a question about editing an interview rough cut, a Friday deadline, and a fixed Thursday clock. The expected result has `deadlineStatus: "due-soon"`, selects **Editing for rhythm**, and includes an educator briefing grounded in that document.
+The demo sends learner `learner-204`, a question about editing an interview rough cut, a Friday deadline, and a fixed Thursday clock. Expected output has `deadlineStatus: "due-soon"`, selects **Editing for rhythm**, and includes an educator briefing grounded in that document.
 
-The service embeds its three course notes at startup. Per request it embeds the learner query, ranks notes by cosine similarity, and passes only the top match into the completion. That handoff keeps the report tied to material an educator actually published. Idempotent reads here matter: re-running the search shouldn't change which doc wins.
+The service embeds its three course notes at startup. Per request it embeds the learner query, ranks notes by cosine similarity, and passes only the top match into the completion. That handoff is what keeps the report tied to material an educator actually published. Idempotent by construction: same query and clock, same briefing.
 
 ## The deadline decision
 
-Deadlines inside 48 hours are `due-soon`; elapsed deadlines are `overdue`; later work is `on-track`. We keep this outside the model call so the state is deterministic and easy to test in a postmortem.
+Deadlines inside 48 hours are `due-soon`; elapsed deadlines are `overdue`; later work is `on-track`. We keep this outside the model call so the operational state is deterministic and easy to test in a postmortem.
 
 ```bash
 npm test
 npm run typecheck
 ```
 
-The focused test supplies `2026-08-20T12:00:00.000Z` as the current time and `2026-08-21T17:00:00.000Z` as the due time. Run `npm test`; the business decision must be `due-soon`.
+The focused test supplies `2026-08-20T12:00:00.000Z` as current time and `2026-08-21T17:00:00.000Z` as due time. Run `npm test`; the business decision must be `due-soon`.
 
 ## One real gotcha
 
-Build the document index once at startup, not on every search. Query embeddings go on the request path; document embeddings belong at ingestion time. This sample uses a small in-memory index so the full content-to-report path stays visible in one service. Miss this and you'll burn embeddings on every call, which pages someone at 3am when traffic spikes.
+Build the document index once at startup. Do not embed the full course library on every search. Query embeddings go on the request path; document embeddings belong at ingestion time. This sample uses a small in-memory index so the content-to-report path stays visible in one service and is easy to debug when paged.
 
 ## Request body
 
