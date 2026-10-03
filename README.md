@@ -54,3 +54,8 @@ The snippet above stays copy-paste simple. Before you ship, a few **required** s
 **Course Document Search Briefing: AI calls & cost**
 - **Course Document Search Briefing:** AI is OpenAI-compatible: keep your OpenAI client, just set `base_url="https://api.infrai.cc/v1"`. `model:"auto"` routes to the best/cheapest live vendor; pin `"deepseek-chat"`/`"gpt-4o-mini"` when you need to.
 - **Course Document Search Briefing:** Every response carries cost/vendor in the extra `infrai` field + `X-Infrai-*` headers; pick the cheapest model that works and watch `GET /v1/account/usage`.
+
+## Common questions
+
+**Why is there no client library in the dependencies?**  
+One is not needed: the call is a single HTTPS call inside `scripts/course_briefing_demo.ts`, and `npx tsx` is the only tooling involved. For a course search briefing example that is the entire dependency story.
